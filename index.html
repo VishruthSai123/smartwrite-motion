@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta name="theme-color" content="#090b12"><title>SmartWrite — LED Matrix Studio</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css?v=4">
+  <script src="https://unpkg.com/mqtt@5.10.4/dist/mqtt.min.js"></script>
+</head>
+<body>
+  <div class="ambient ambient-a"></div><div class="ambient ambient-b"></div>
+  <main class="shell">
+    <header class="topbar">
+      <a class="brand" href="#"><span class="brand-mark"><i></i><i></i><i></i><i></i></span><span>SMARTWRITE<small>ESP32 LED MATRIX</small></span></a>
+      <div class="connection"><span id="statusDot" class="dot"></span><span id="connectionText">Connecting</span><span class="status-divider"></span><span id="deviceText">Device not acknowledged</span></div>
+    </header>
+    <section class="hero">
+      <div><div class="eyebrow"><span class="eyebrow-line"></span> YOUR IDEAS, IN LIGHT</div>
+        <h1>Write it.<br><em>Light it up.</em></h1>
+        <p class="hero-copy">A little message, a big display. Send text or calculate something and watch it appear on your 32×8 LED matrix.</p>
+      </div>
+      <div class="hero-chip"><span class="pulse"></span> LIVE DEVICE LINK <b>MQTT</b></div>
+    </section>
+    <section class="device-card">
+      <div class="card-head"><div><span class="section-kicker">HARDWARE PREVIEW</span><h2>Matrix display</h2></div><span class="device-tag"><span class="mini-dot"></span> 32 × 8 · FC-16</span></div>
+      <div class="matrix-shell"><div class="matrix-grid" id="matrixPreview" aria-label="Visual preview of LED matrix"></div></div>
+      <div class="preview-foot"><span id="previewLabel">PREVIEW ONLY · NOT DEVICE CONFIRMATION</span><span id="previewMode">IDLE</span></div>
+    </section>
+    <section class="workspace">
+      <div class="mode-tabs"><button class="mode-tab active" data-mode="text"><span>01</span> Text mode</button><button class="mode-tab" data-mode="calculator"><span>02</span> Calculator</button><button class="mode-tab" data-mode="motion"><span>03</span> Motion particles</button></div>
+      <section id="textPanel" class="editor-card">
+        <div class="panel-title"><div><span class="section-kicker">MESSAGE STUDIO</span><h2>What should it say?</h2></div><span class="step-number">01 / TEXT</span></div>
+        <label class="sr-only" for="textInput">Message text</label>
+        <textarea id="textInput" maxlength="120" placeholder="Type something worth displaying…">HELLO HACKATHON 2026</textarea>
+        <div class="input-meta"><span>UP TO 120 CHARACTERS</span><span id="charCount">21 / 120</span></div>
+        <div class="speed-row"><div><label for="speedInput">Scroll speed</label><span>Lower is faster</span></div><div class="speed-control"><span>SLOW</span><input id="speedInput" type="range" min="10" max="150" value="50"><span>FAST</span><b id="speedValue">50</b></div></div>
+        <div class="action-row"><button id="displayBtn" class="btn btn-primary"><span>Display message</span><b>↗</b></button><button id="clearBtn" class="btn btn-secondary">Clear</button></div>
+        <div class="utility-row"><button id="stopBtn" class="text-btn">Ⅱ Stop scrolling</button><button id="replayBtn" class="text-btn">↻ Replay</button></div>
+      </section>
+      <section id="calculatorPanel" class="editor-card hidden">
+        <div class="panel-title"><div><span class="section-kicker">QUICK CALCULATION</span><h2>Make the numbers glow.</h2></div><span class="step-number">02 / MATH</span></div>
+        <div class="calc-display"><div id="calcExpression" class="calc-expression">0</div><div id="calcResult" class="calc-result">Result appears here</div></div>
+        <div class="keypad" id="keypad">
+          <button data-key="(">(</button><button data-key=")">)</button><button data-key="⌫" class="key-muted">⌫</button><button data-key="C" class="key-clear">C</button>
+          <button data-key="7">7</button><button data-key="8">8</button><button data-key="9">9</button><button data-key="/" class="key-op">÷</button>
+          <button data-key="4">4</button><button data-key="5">5</button><button data-key="6">6</button><button data-key="*" class="key-op">×</button>
+          <button data-key="1">1</button><button data-key="2">2</button><button data-key="3">3</button><button data-key="-" class="key-op">−</button>
+          <button data-key="0">0</button><button data-key=".">.</button><button data-key="+" class="key-op">+</button><button data-key="=" class="key-equals">=</button>
+        </div>
+        <button id="calculateBtn" class="btn btn-primary calculate-btn"><span>Calculate & display</span><b>↗</b></button>
+        <p class="calc-note">Supports parentheses and operator precedence. No code execution or unsafe eval.</p>
+      </section>
+      <section id="motionPanel" class="editor-card motion-editor hidden">
+        <div class="panel-title"><div><span class="section-kicker">MOTION PHYSICS LAB</span><h2>Tilt the world.</h2></div><span class="step-number">03 / MOTION</span></div>
+        <p class="motion-intro">Your phone becomes a physical particle chamber. Real accelerometer gravity moves one shared particle system — the same 32 particles are always either in your phone or on the 32 × 8 LED matrix.</p>
+
+        <div class="experience-switch" role="tablist" aria-label="Particle experiences">
+          <button class="experience-btn active" data-experience="gravity" role="tab" aria-selected="true"><span class="experience-index">A</span><span class="experience-copy"><b>Matrix Gravity</b><small>32 × 8 LED chamber · tilt to pour light</small></span><span class="experience-arrow">↗</span></button>
+          <button class="experience-btn" data-experience="transfer" role="tab" aria-selected="false"><span class="experience-index">B</span><span class="experience-copy"><b>Mobile Particle Transfer</b><small>Phone chamber → opposite matrix edge</small></span><span class="experience-arrow">↗</span></button>
+        </div>
+
+        <div class="sensor-console">
+          <div class="sensor-line">
+            <div class="sensor-state"><span id="sensorDot" class="sensor-dot"></span><div><b id="sensorStatus">SENSOR IDLE</b><small id="sensorSource">Tap Enable motion to request access</small></div></div>
+            <div class="sensor-actions"><button id="enableMotionBtn" class="btn btn-primary sensor-enable"><span>Enable motion</span></button><button id="calibrateBtn" class="btn btn-secondary sensor-small" disabled>Calibrate</button><button id="pauseMotionBtn" class="btn btn-secondary sensor-small" disabled>Pause</button></div>
+          </div>
+          <div class="sensor-line sensor-line-lower"><label class="sensitivity-control" for="sensitivityInput"><span>Sensitivity</span><input id="sensitivityInput" type="range" min="50" max="200" value="100"><b id="sensitivityValue">1.00×</b></label><button id="resetMotionBtn" class="text-btn"><span>↺</span> Reset particles</button></div>
+          <div class="tilt-row">
+            <span>WEB TILT</span>
+            <div class="tilt-pad" id="tiltPad">
+              <button type="button" data-tilt="0,-1" aria-label="Tilt up">↑</button>
+              <button type="button" data-tilt="-1,0" aria-label="Tilt left">←</button>
+              <button type="button" data-tilt="0,0" aria-label="Level">●</button>
+              <button type="button" data-tilt="1,0" aria-label="Tilt right">→</button>
+              <button type="button" data-tilt="0,1" aria-label="Tilt down">↓</button>
+            </div>
+            <small>Use these if the phone sensor is unavailable. The matrix preview above updates live.</small>
+          </div>
+        </div>
+
+        <div id="motionStage" class="motion-stage" data-experience="gravity">
+          <div class="motion-stage-header"><span id="motionStageLabel">MATRIX GRAVITY · 32 × 8</span><span id="motionStageHint">Enable motion, then tilt the phone</span></div>
+          <canvas id="motionCanvas" aria-label="Motion particle chamber"></canvas>
+          <div class="motion-stage-footer"><span><i class="legend-dot mobile"></i> mobile particles</span><span><i class="legend-dot matrix"></i> matrix particles</span><span id="motionBoundaryLabel">Boundary exit → opposite matrix edge</span></div>
+        </div>
+
+        <div class="motion-matrix-card">
+          <div class="motion-matrix-header"><div><span class="section-kicker">LIVE MATRIX</span><span id="motionMatrixSummary">32 × 8 · 0 LEDs lit</span></div><span id="motionAckState" class="ack-state local">LOCAL · NOT SYNCED</span></div>
+          <canvas id="motionMatrixCanvas" aria-label="Live 32 by 8 LED matrix state"></canvas>
+        </div>
+
+        <div class="motion-stats" aria-live="polite">
+          <div class="motion-stat"><span>TOTAL</span><b id="statTotal">32</b></div>
+          <div class="motion-stat"><span>MOBILE</span><b id="statMobile">0</b></div>
+          <div class="motion-stat"><span>MATRIX</span><b id="statMatrix">32</b></div>
+          <div class="motion-stat"><span>GRAVITY</span><b id="statGravity">0.00 / 0.00</b></div>
+          <div class="motion-stat"><span>SENSOR</span><b id="statSensor">idle</b></div>
+          <div class="motion-stat"><span>MQTT</span><b id="statMqtt">connecting</b></div>
+          <div class="motion-stat"><span>ESP32 ACK</span><b id="statAck">waiting</b></div>
+          <div class="motion-stat"><span>SYNC</span><b id="statSync">0.0 /s</b></div>
+        </div>
+
+        <details id="touchFallback" class="touch-fallback">
+          <summary>Touch test controller <span>manual gravity input · for testing when sensors are unavailable</span></summary>
+          <div class="touch-fallback-body">
+            <p class="touch-note">Drag the puck to apply a manual gravity vector. This is test input, not device sensor data. Tap Center to return control to the sensors.</p>
+            <div id="touchPad" class="touch-pad" role="application" aria-label="Manual gravity input"><div class="touch-grid" aria-hidden="true"></div><div class="touch-axis touch-axis-x" aria-hidden="true"></div><div class="touch-axis touch-axis-y" aria-hidden="true"></div><span class="touch-pad-label label-top">TOP</span><span class="touch-pad-label label-bottom">BOTTOM</span><span class="touch-pad-label label-left">LEFT</span><span class="touch-pad-label label-right">RIGHT</span><div id="touchKnob" class="touch-knob"></div></div>
+            <button id="touchCenterBtn" class="btn btn-secondary touch-center-btn">Center gravity</button>
+          </div>
+        </details>
+      </section>
+    </section>
+    <section class="activity-card">
+      <div class="activity-title"><div><span class="section-kicker">DEVICE FEEDBACK</span><h2>Live activity</h2></div><span id="ackBadge" class="ack-badge">WAITING FOR DEVICE</span></div>
+      <div id="activityLog" class="activity-log"><div class="log-empty"><span>○</span> Waiting for the ESP32 to come online…</div></div>
+    </section>
+    <footer><span>SMARTWRITE <b>·</b> MOTION v4</span><span>Built for ideas that deserve to be seen.</span></footer>
+  </main>
+  <div id="toast" class="toast" role="status"></div>
+  <script src="app.js?v=4"></script>
+</body></html>
